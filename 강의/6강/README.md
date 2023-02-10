@@ -775,6 +775,141 @@ public class RequestBodyStringController {
 * HTTP 헤더 조회: `@RequestHeader`
 
 ## HTTP 요청 메시지 - JSON
+### RequestBodyJsonController
+```java
+@Slf4j
+@Controller
+public class RequestBodyJsonController {
+  private ObjectMapper objectMapper = new ObjectMapper();
+
+  @PostMapping("/request-body-json-v1")
+  public void requestBodyJsonV1(
+          HttpServletRequest req,
+          HttpServletResponse resp
+  ) throws IOException {
+    ServletInputStream inputStream = req.getInputStream();
+    String messageBody = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+
+    log.info("messageBody = {}", messageBody);
+
+    HelloData data = objectMapper.readValue(messageBody, HelloData.class);
+    log.info("data = {}", data.toString());
+
+    resp.getWriter().write("echo: " + data.toString());
+  }
+}
+```
+![img_6.png](img_6.png)
+
+### requestBodyJsonV2
+```java
+@Slf4j
+@Controller
+public class RequestBodyJsonController {
+  /**
+   * @RequestBody
+   * HttpMessageConverter 사용 -> StringHttpMessageConverter 적용
+   *
+   * @ResponseBody
+   * - 모든 메서드에 @ResponseBody 적용
+   * - 메시지 바디 정보 직접 반환(view 조회X)
+   * - HttpMessageConverter 사용 -> StringHttpMessageConverter 적용
+   */
+  @ResponseBody
+  @PostMapping("/request-body-json-v2")
+  public String requestBodyJsonV2(
+          @RequestBody String message
+  ) throws IOException {
+    HelloData data = objectMapper.readValue(message, HelloData.class);
+    log.info("data = {}", data.toString());
+
+    return "echo: " + data.toString();
+  }
+}
+```
+
+### requestBodyJsonV3
+```java
+@Slf4j
+@Controller
+public class RequestBodyJsonController {
+  /**
+   * @RequestBody 생략 불가능(@ModelAttribute 가 적용되어 버림)
+   * HttpMessageConverter 사용 -> MappingJackson2HttpMessageConverter (contenttype: application/json)
+   */
+  @ResponseBody
+  @PostMapping("/request-body-json-v3")
+  public String requestBodyJsonV3(
+          @RequestBody HelloData data
+  ) throws IOException {
+    log.info("data = {}", data.toString());
+    return "echo: " + data.toString();
+  }
+}
+```
+
+### `@RequestBody` 객체 파라미터
+* `@RequestBody HelloData data`
+* `@RequestBody`에 직접 만든 객체를 지정할 수 있다.
+
+`HttpEntity`, `@RequestBody`를 사용하면 HTTP 메시지 컨버터가 HTTP 메시지 마디의 내용을 우리가 원하는 문자나 객체등으로 변환해준다.
+HTTP 메시지 컨버터는 문자 뿐만 아니라 JSON도 객체로 변환해주는데, 우리가 방금 V2에서 했던 작업을 대신 처리해준다.
+
+### `@RequestBody`는 생략 불가능
+스프링은 `@ModelAttribute`, `@RequestParam`과 같은 해당 애노테이션을 생략시 다음과 같은 규칙을 적용한다.
+* String, int, Integer 같은 단순 타입 = `@RequestParam`
+* 나머지 = `@ModelAttribute`
+
+따라서 이 경우 `HelloData`에 `@RequestBody`를 생략하면 `@ModelAttribute`가 적용되어버린다.
+
+> **주의**<br>
+> HTTP 요청 시에 `Content-Type`이 `application/json`인지 꼭 확인해야 한다.
+
+### requestBodyJsonV4
+```java
+@Slf4j
+@Controller
+public class RequestBodyJsonController {
+  @ResponseBody
+  @PostMapping("/request-body-json-v4")
+  public String requestBodyJsonV4(
+          HttpEntity<HelloData> data
+  ) throws IOException {
+    log.info("data = {}", data.getBody().toString());
+    return "echo: " + data.getBody().toString();
+  }
+}
+```
+
+### requestBodyJsonV5
+```java
+@Slf4j
+@Controller
+public class RequestBodyJsonController {
+  /**
+   * @RequestBody 생략 불가능(@ModelAttribute 가 적용되어 버림)
+   * HttpMessageConverter 사용 -> MappingJackson2HttpMessageConverter
+   * (Content-Type: application/json)
+   *
+   * @ResponseBody 적용
+   * - 메시지 바디 정보 직접 반환(view 조회X)
+   * - HttpMessageConverter 사용 -> MappingJackson2HttpMessageConverter 적용
+   *   (Accept: application/json)
+   */
+  @ResponseBody
+  @PostMapping("/request-body-json-v5")
+  public HelloData requestBodyJsonV5(
+          @RequestBody HelloData data
+  ) throws IOException {
+    log.info("data = {}", data.toString());
+    return data;
+  }
+}
+```
+* `@RequestBody` 요창
+  * JSON -> HTTP Message Converter -> Object
+* `@ResponseBody` 응답
+  * Object -> Http Message Converter -> JSON
 
 ## 응답 - 정적 리소스, 뷰 템플릿
 
