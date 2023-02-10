@@ -588,6 +588,76 @@ public class RequestParamController {
 ```
 
 ## HTTP 요청 파라미터 - @ModelAttribute
+### HelloData
+```java
+@Data
+public class HelloData {
+    private String username;
+    private int age;
+}
+```
+* `Lombok.Data`
+  * `@Getter` + `@Setter` + `@ToString` + `@EqualsAndHashCode` + `@RequiredArgsConstruct`
+
+### modelAttribute V1
+```java
+@Slf4j
+@Controller
+public class RequestModelParamController {
+  /**
+   * @ModelAttribute 사용
+   * - default: required = false
+   *    - String: null
+   *    - int: 0 이 입력됨.
+   *
+   * 1. HelloData 객체를 생성한다.
+   * 2. 요청 파라미터의 이름으로 HelloData 객체의 프로퍼티를 찾는다. 그리고 해당 프로퍼티의 setter를 호출해서 파라미터의 값을 바인딩 한다.
+   * 예) 파라미터 이름이 username이면 setUsername() 메서드를 찾아서 호출하면서 값을 입력한다.
+   */
+  @ResponseBody
+  @RequestMapping("/model-attribute-v1")
+  public String modelAttributeV1(
+          @ModelAttribute HelloData helloData
+  ) {
+    log.info("username = {}, age = {}", helloData.getUsername(), helloData.getAge());
+    return "ok";
+  }
+}
+```
+
+스프링 MVC는 `@ModelAttribute`가 있으면 다음을 실행한다.
+* `HelloData` 객체를 생성한다. 
+* 요청 파라미터의 이름으로 `HelloData` 객체의 프로퍼티를 찾는다. 그리고 해당 프로퍼티의 `setter`를 호출해서 파라미터의 값을 바인딩 한다. 
+* 예) 파라미터 이름이 `username`이면 `setUsername()` 메서드를 찾아서 호출하면서 값을 입력한다.
+
+### 프로퍼티
+객체에 `getAge()`, `setAge()`메서드가 있으면, 이 객체는 `age`이라는 프로퍼티를 가지고 있다.
+
+`age` 프로퍼티 값을 변경하면 `setAge()`이 호출되고, 조회하면 `getAge()`이 호출된다.
+
+### 바인딩 오류
+`age = abc`처럼 숫자가 들어가야 할 곳에 문자를 넣으면 `BindException`이 발생한다.
+이런 바인딩 오류를 처리하는 방법은 검증 부분에서 다룬다.
+
+### modelAttribute V2
+```java
+@Slf4j
+@Controller
+public class RequestModelParamController {
+  /**
+   * @ModelAttribute 생략 가능
+   * 하지만 권장하지 않음.
+   */
+  @ResponseBody
+  @RequestMapping("/model-attribute-v2")
+  public String modelAttributeV2(
+          HelloData helloData
+  ) {
+    log.info("username = {}, age = {}", helloData.getUsername(), helloData.getAge());
+    return "ok";
+  }
+}
+```
 
 ## HTTP 요청 메시지 - 단순 텍스트
 
