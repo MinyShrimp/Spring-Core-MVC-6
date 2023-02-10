@@ -415,8 +415,177 @@ public class RequestHeaderController {
 * HTTP Header, HTTP 쿼리 파라미터와 같이 하나의 키에 여러 값을 받을 때 사용한다.
 
 ## HTTP 요청 파라미터 - 쿼리 파라미터, HTML Form
+`HttpServletRequest`의 `req.getParameter()`를 사용하면 다음 두 가지 요청 파라미터를 조회할 수 있다.
+
+### RequestParamController
+```java
+@Slf4j
+@Controller
+public class RequestParamController {
+  /**
+   * 변환 타입이 없으면서 이렇게 응답에 값을 직접 집어 넣으면, view 조회 X
+   */
+  @RequestMapping("/request-param-v1")
+  public void requestParamV1(
+          HttpServletRequest req,
+          HttpServletResponse resp
+  ) throws IOException {
+    String username = req.getParameter("username");
+    int age = Integer.parseInt(req.getParameter("age"));
+    log.info("username = {}, age = {}", username, age);
+    resp.getWriter().write("ok");
+  }
+}
+```
 
 ## HTTP 요청 파라미터 - @RequestParam
+### requestParamV2
+```java
+@Slf4j
+@Controller
+public class RequestParamController {
+  /**
+   * @RequestParam 사용
+   * - 파라미터 이름으로 바인딩
+   * @RequestBody 추가
+   * - View 조회를 무시하고, HTTP Message Body에 직접 해당 내용 입력
+   */
+  @ResponseBody
+  @RequestMapping("/request-param-v2")
+  public String requestParamV2(
+          @RequestParam("username") String username,
+          @RequestParam("age") int age
+  ) {
+    log.info("username = {}, age = {}", username, age);
+    return "ok";
+  }
+}
+```
+
+### requestParamV3
+```java
+@Slf4j
+@Controller
+public class RequestParamController {
+  /**
+   * @RequestParam 사용
+   * - HTTP 파라미터 이름이 변수 이름과 같으면 @RequestParam(name="xx") 생략 가능
+   */
+  @ResponseBody
+  @RequestMapping("/request-param-v3")
+  public String requestParamV3(
+          @RequestParam String username,
+          @RequestParam int age
+  ) {
+    log.info("username = {}, age = {}", username, age);
+    return "ok";
+  }
+}
+```
+
+### requestParamV4
+```java
+@Slf4j
+@Controller
+public class RequestParamController {
+  /**
+   * @RequestParam 사용
+   * - String, int 등의 단순 타입이면 @RequestParam 도 생략 가능
+   */
+  @ResponseBody
+  @RequestMapping("/request-param-v3")
+  public String requestParamV3(
+          String username,
+          int age
+  ) {
+    log.info("username = {}, age = {}", username, age);
+    return "ok";
+  }
+}
+```
+> **주의**<br>
+> `@RequestParam` 애노테이션을 생략하면 스프링 MVC는 내부에서 `required=false`를 적용한다.
+
+> **참고**<br>
+> 이렇게 애노테이션을 완전히 생략해도 되는데, 너무 없는 것도 과하다는 주관적 생각이 있다.
+> `@RequestParam`이 있으면 명확하게 요청 파라미터에서 데이터를 읽는 다는 것을 알 수 있다.
+
+### requestParamRequired
+```java
+@Slf4j
+@Controller
+public class RequestParamController {
+  /**
+   * @RequestParam.required
+   * /request-param-required -> username이 없으므로 예외
+   *
+   * /request-param-required?username= -> 빈문자로 통과
+   *
+   * int age -> null을 int에 입력하는 것은 불가능, 따라서 Integer로 변경해야 함.
+   */
+  @ResponseBody
+  @RequestMapping("/request-param-required")
+  public String requestParamRequired(
+          @RequestParam(required = true) String username,
+          @RequestParam(required = false) Integer age
+  ) {
+    log.info("username = {}, age = {}", username, age);
+    return "ok";
+  }
+}
+```
+* `@RequestParam.required`
+  * 파라미터 필수 여부
+  * 기본값이 `true`이다.
+
+### requestParamDefault
+```java
+@Slf4j
+@Controller
+public class RequestParamController {
+  /**
+   * @RequestParam
+   * - defaultValue 사용
+   *
+   * defaultValue는 빈 문자의 경우도 적용된다.
+   * - /request-param-default?username=
+   * 
+   * required가 의미가 없어진다.
+   */
+  @ResponseBody
+  @RequestMapping("/request-param-default")
+  public String requestParamDefault(
+          @RequestParam(required = true, defaultValue = "guest") String username,
+          @RequestParam(required = false, defaultValue = "-1") int age
+  ) {
+    log.info("username = {}, age = {}", username, age);
+    return "ok";
+  }
+}
+```
+
+### requestParamMap
+```java
+@Slf4j
+@Controller
+public class RequestParamController {
+  /**
+   * @RequestParam Map, MultiValue
+   *
+   * /request-param-map?username= -> 빈문자로 통과
+   *
+   * default -> required = false
+   */
+  @ResponseBody
+  @RequestMapping("/request-param-map")
+  public String requestParamMap(
+          @RequestParam Map<String, Object> paramMap
+  ) {
+    log.info("username = {}, age = {}", paramMap.get("username"), paramMap.get("age"));
+    return "ok";
+  }
+}
+```
 
 ## HTTP 요청 파라미터 - @ModelAttribute
 
