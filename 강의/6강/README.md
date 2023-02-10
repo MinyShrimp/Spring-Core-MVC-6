@@ -363,6 +363,56 @@ public class MappingClassController {
 ```
 
 ## HTTP 요청 - 기본, 헤더 조회
+```java
+@Slf4j
+@RestController
+public class RequestHeaderController {
+    @RequestMapping("/headers")
+    public String headers(
+            HttpServletRequest req,
+            HttpServletResponse resp,
+            HttpMethod httpMethod,
+            Locale locale,
+            @RequestHeader MultiValueMap<String, String> headerMap,
+            @RequestHeader("host") String host,
+            @CookieValue(value = "myCookie", required = false) String cookie
+    ) {
+        log.info("request = {}", req);
+        log.info("response = {}" , resp);
+        log.info("httpMethod = {}", httpMethod);
+        log.info("locale = {}", locale);
+        log.info("headerMap = {}", headerMap);
+        log.info("header host = {}", host);
+        log.info("myCookie = {}", cookie);
+
+        return "ok";
+    }
+}
+```
+![img_4.png](img_4.png)
+
+* `HttpServletRequest`
+* `HttpServletResponse`
+* `HttpMethod`
+  * Http 메서드를 조회한다.
+* `Locale`
+  * Locale 정보를 조회한다.
+* `@RequestHeader MultiValueMap<String, String>`
+  * 모든 HTTP 헤더를 MultiValueMap 형식으로 조회한다.
+* `@RequestHeader("host")`
+  * 특정 HTTP 헤더를 조회한다.
+  * 속성
+    * 필수 값 여부: `required`
+    * 기본 값 속성: `defaultValue`
+* `@CookieValue(value = "myCookie", required = false)`
+  * 특정 쿠키를 조회한다.
+  * 속성
+    * 필수 값 여부: `required`
+    * 기본 값 속성: `defaultValue`
+
+### MultiValueMap
+* 하나의 Key에 여러 Value를 저장할 수 있는 Map
+* HTTP Header, HTTP 쿼리 파라미터와 같이 하나의 키에 여러 값을 받을 때 사용한다.
 
 ## HTTP 요청 파라미터 - 쿼리 파라미터, HTML Form
 
